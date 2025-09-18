@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html>
+    <body>
+    <style>
+      body,html {
+        overflow: hidden;
+      }
+      
+      canvas {
+      	z-index: -1;
+        position: absolute;
+        top: -8px;
+        left: -8px;
+      }
+      
+      * {
+      	color: white;
+      }
+    </style>
+    
+    <h1>Balls</h1>
+    <p>idk jst some balls</p>
+    
+    <canvas id="c" style="border:1px solid grey"></canvas>
+    
+    <script>
+const WORLD = {
+	Fg : .1
+}
+class Vec2 {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+class PhysicsBase {
+  constructor(x, y) {
+    this.Fa = new Vec2(0,0);
+    this.velocity = new Vec2(0,0);
+    this.position = new Vec2(x, y);
+  }
+  
+  calcNetForce() {
+  	let netForce = new Vec2(this.Fa.x, this.Fa.y + WORLD.Fg);
+    
+    return netForce;
+  }
+
+  update() {
+  	let Fnet = this.calcNetForce(); 
+    
+    this.velocity.x += Fnet.x;
+    this.velocity.y += Fnet.y;
+    
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
+    
+    this.Fa.x = 0;
+    this.Fa.y = 0;
+  }
+}
+
+class Ball extends PhysicsBase {
+	constructor(x, y, r) {
+    	super(x,y);
+        this.r = r;
+    }
+    
+    draw(ctx) {
+    	ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.r, 0, 2 * Math.PI);
+        ctx.fillStyle = "red";
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "blue";
+        ctx.stroke();
+    }
+}
+
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
+let ball = new Ball(100,100,20);
+
+function resize() {
+  c.width = window.innerWidth + 8;
+  c.height = window.innerHeight + 8;
+}
+
+function drawLine(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = "red";
+  ctx.stroke();
+}
+
+async function init() {
+  resize();
+    
+  loop();
+}
+
+function loop() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,c.width,c.height);
+  
+  ball.draw(ctx);
+  ball.update();
+  
+  requestAnimationFrame(loop);
+}
+
+init();
+    </script> 
+    
+    </body>
+</html>
