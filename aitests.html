@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html>
 <body>
-<h1>JavaScript Perceptron</h1>
+<h1>JavaScript Neural Networks</h1>
 
 <p>Will I go to the concert?</p>
 <div id="demo"></div>
 
 <script>
 class Neuron {
-	constructor(t,w) {
+	constructor(t,numWeights) {
     	this.threshold = t;
-        this.weights = w;
+        this.weights = [];
+        for(let j = 0; j < numWeights; j++) {
+        	this.weights.push(Math.random());
+        }
     }
     
     calculateOut(inputs) {
@@ -20,18 +23,36 @@ class Neuron {
     }
 }
 
+class Layer {
+	constructor(numNeurons, plnn) {
+    	this.neurons = [];
+        for(let i = 0; i < numNeurons; i++) {
+        	this.neurons.push(new Neuron(Math.random()*plnn,plnn));
+        }
+    }
+    
+    calcOut(inputs) {
+    	let out = [];
+   		for(let i = 0; i < this.neurons.length; i++) {
+        	out.push(this.neurons[i].calculateOut(inputs));
+        }
+        return out;
+    }
+}
+
 const threshold = 1.5;
 const network = {
 	input : [1,0,1],
-    layer1 : [new Neuron()]
+    layer0 : new Layer(4,3),
+    layer1 : new Layer(4,4),
+    out : new Neuron(Math.random()*4, 4)
 }
 
-let sum = 0;
-for (let i = 0; i < inputs.length; i++) {
-  sum += inputs[i] * weights[i];
-}
+const layer0Out = network.layer0.calcOut(network.input);
+const layer1Out = network.layer1.calcOut(layer0Out);
+const out = network.out.calculateOut(layer1Out);
 
-document.getElementById("demo").innerHTML = (sum > threshold);  
+document.getElementById("demo").innerHTML = out;  
 </script>
 
 </body>
