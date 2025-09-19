@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>JavaScript Perceptron</h1>
+
+<p>Will I go to the concert?</p>
+<div id="demo"></div>
+
+<script>
+class Neuron {
+	constructor(t,w) {
+    	this.threshold = t;
+        this.weights = w;
+    }
+    
+    calculateOut(inputs) {
+    	let sum = 0;
+        inputs.forEach((v,i,a)=>{sum+=v*this.weights[i]});
+        return sum > this.threshold;
+    }
+}
+
+const threshold = 1.5;
+const network = {
+	input : [1,0,1],
+    layer1 : [new Neuron()]
+}
+
+let sum = 0;
+for (let i = 0; i < inputs.length; i++) {
+  sum += inputs[i] * weights[i];
+}
+
+document.getElementById("demo").innerHTML = (sum > threshold);  
+</script>
+
+</body>
+</html>
