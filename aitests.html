@@ -8,8 +8,9 @@
 
 <script>
 class Neuron {
-	constructor(t,numWeights) {
+	constructor(t,numWeights, learningRate = 0.00001) {
     	this.threshold = t;
+        this.learningRate = learningRate;
         this.weights = [];
         for(let j = 0; j < numWeights; j++) {
         	this.weights.push(Math.random());
@@ -20,6 +21,16 @@ class Neuron {
     	let sum = 0;
         inputs.forEach((v,i,a)=>{sum+=v*this.weights[i]});
         return sum > this.threshold;
+    }
+    
+    train(inputs, desired) {
+    	let guess = this.calculateOut(inputs);
+        let error = desired - guess;
+        if (error != 0) {
+          	for (let i = 0; i < inputs.length; i++) {
+            	this.weights[i] += this.learningRate * error * inputs[i];
+          	}
+        }
     }
 }
 
