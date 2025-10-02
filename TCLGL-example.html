@@ -74,44 +74,62 @@ class Shader {
     }
 }
 
+class Renderer2D {
+	constructor(canvas) {
+    	this.gl = canvas.getContext("webgl");
+    }
+    
+    resize() {
+    	this.gl.canvas.width = window.innerWidth;
+        this.gl.canvas.height = window.innerHeight;
+    }
+    
+    render() {
+    	this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    	var primitiveType = this.gl.TRIANGLES;
+  		var offset = 0;
+  		var count = 3;
+  		this.gl.drawArrays(primitiveType, offset, count);
+    }
+    
+    setup(positionAttributeName, shader) {
+    	this.positionAttributeLocation = shader.getAttrib(this.gl, positionAttributeName);
+        this.gl.enableVertexAttribArray(this.positionAttributeLocation);
+    
+  	this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
+    	this.gl.clearColor(0.5, 0.7, 1.0, 1.0);
+    
+    }
+}
+
 var canvas = document.querySelector("#c");
-var gl = canvas.getContext("webgl");
+var renderer = new Renderer2D(canvas);
 
 function init() {
-	gl.clearColor(0.5, 0.7, 1.0, 1.0);
+    let mainshader = new Shader(renderer.gl, document.querySelector("#vertex-shader-2d").text, document.querySelector("#fragment-shader-2d").text);
     
-    let mainshader = new Shader(gl, document.querySelector("#vertex-shader-2d").text, document.querySelector("#fragment-shader-2d").text);
+    renderer.resize();
     
-    canvas.width=window.innerWidth;
-    canvas.height=window.innerHeight;
-    
-  	var positionAttributeLocation = mainshader.getAttrib(gl, "a_position");
-  	var positionBuffer = gl.createBuffer();
-  	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  	var positionBuffer = renderer.gl.createBuffer();
+  	renderer.gl.bindBuffer(renderer.gl.ARRAY_BUFFER, positionBuffer);
     var positions = [
       0, 0,
       0, 0.5,
       0.7, 0,
     ];
-  	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    // Turn on the attribute
-  	gl.enableVertexAttribArray(positionAttributeLocation);
+  	renderer.gl.bufferData(renderer.gl.ARRAY_BUFFER, new Float32Array(positions), renderer.gl.STATIC_DRAW);
     
-  	gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+    renderer.setup("a_position",mainshader);
 
   // Bind the position buffer.
-  	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  	renderer.gl.bindBuffer(renderer.gl.ARRAY_BUFFER, positionBuffer);
     
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    renderer.gl.viewport(0, 0, renderer.gl.canvas.width, renderer.gl.canvas.height);
     
 
 	function loop() {
-    	gl.clear(gl.COLOR_BUFFER_BIT);
-        mainshader.use(gl);
-        var primitiveType = gl.TRIANGLES;
-  		var offset = 0;
-  		var count = 3;
-  		gl.drawArrays(primitiveType, offset, count);
+        mainshader.use(renderer.gl);
+        renderer.render();
 		requestAnimationFrame(loop);
 	}
 	loop();
