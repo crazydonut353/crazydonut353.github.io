@@ -22,7 +22,7 @@ td, th {
 <h1>ChudCPU emulator</h1>
 <p id="out">This is a paragraph.</p>
 <div id="ui">
-	<button>next instruction</button><br /><br />
+	<button id="next">next instruction</button><br /><br />
 </div>
 <script>
 /**
@@ -283,8 +283,18 @@ function CPU(I, A, D, AR) { // simple. just mask for operation select
     }
 }
 
-function COMPUTER() {
-	
+function COMPUTER(combinedMem, programMem, programCounter) {
+	const G = combinedMem.f_regs();
+	const R = CPU(programMem.f_reg(programCounter.f_reg()), G[0], G[1], G[2]);
+	programMem.update(R[1], R[0]);
+	programCounter.update(R[2], G[0]);
+}
+
+function update(combinedMem, programMem, programCounter, ui, table) {
+	COMPUTER(combinedMem, programMem, programCounter);
+	// update ui here
+	// update ram table here
+	document.getElementById("out").innerText = combinedMem.f_regs();
 }
 
 function probe(value) {
@@ -300,7 +310,12 @@ nums[1] = 1;
 try {
 	const combinedMem = new CM();
 	const programMem = new ROM();
-	createTable(programMem.genTable(10));
+	const programCounter = new Counter();
+	
+	const nextInstructionEl = document.getElementById("next");
+	let b = createTable(programMem.genTable(10));
+
+	nextInstructionEl.addEventListener((e)=>update(combinedMem, programMem, programCounter), "click");
 } catch(e) {
 	document.getElementById("out").innerText = e;
 }
