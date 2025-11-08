@@ -84,22 +84,39 @@
   }
 
   /* === Collapsible Converter Panel === */
-  #converterPanel {
-    position: fixed;
-    top: 60px;
-    right: -260px;
-    width: 260px;
-    background-color: #2f2f46;
-    border-radius: 8px 0 0 8px;
-    padding: 10px;
-    font-size: 13px;
-    transition: right 0.3s ease-in-out;
-    box-shadow: -2px 0 6px rgba(0,0,0,0.4);
-    z-index: 100;
-  }
-  #converterPanel.open {
-    right: 0;
-  }
+  /* === Collapsible Converter Panel (scrollable) === */
+#converterPanel {
+  position: fixed;
+  top: 60px;
+  right: -260px;
+  width: 260px;
+  height: 80vh; /* gives it a max visible height */
+  background-color: #2f2f46;
+  border-radius: 8px 0 0 8px;
+  padding: 10px;
+  font-size: 13px;
+  transition: right 0.3s ease-in-out;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.4);
+  z-index: 100;
+  overflow-y: auto; /* enables scrolling inside */
+}
+
+/* Scrollbar styling for dark theme */
+#converterPanel::-webkit-scrollbar {
+  width: 6px;
+}
+#converterPanel::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 4px;
+}
+#converterPanel::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
+}
+
+#converterPanel.open {
+  right: 0;
+}
+
 
   #toggleConverter {
     position: fixed;
