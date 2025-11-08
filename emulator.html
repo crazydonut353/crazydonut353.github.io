@@ -64,8 +64,6 @@
   button:hover {
     background-color: #5b6ba1;
   }
-
-  /* Right side split layout */
   .right-box {
     display: flex;
     flex-direction: column;
@@ -82,15 +80,12 @@
     display: block;
     margin-top: 10px;
   }
-
-  /* === Collapsible Converter Panel === */
-  /* === Collapsible Converter Panel (scrollable) === */
 #converterPanel {
   position: fixed;
   top: 60px;
   right: -260px;
   width: 260px;
-  height: 80vh; /* gives it a max visible height */
+  height: 80vh;
   background-color: #2f2f46;
   border-radius: 8px 0 0 8px;
   padding: 10px;
@@ -98,10 +93,8 @@
   transition: right 0.3s ease-in-out;
   box-shadow: -2px 0 6px rgba(0,0,0,0.4);
   z-index: 100;
-  overflow-y: auto; /* enables scrolling inside */
+  overflow-y: auto;
 }
-
-/* Scrollbar styling for dark theme */
 #converterPanel::-webkit-scrollbar {
   width: 6px;
 }
@@ -112,58 +105,53 @@
 #converterPanel::-webkit-scrollbar-thumb:hover {
   background-color: #777;
 }
-
 #converterPanel.open {
   right: 0;
 }
-
-
-  #toggleConverter {
-    position: fixed;
-    top: 70px;
-    right: 0;
-    background-color: #444c68;
-    color: #fff;
-    border-radius: 6px 0 0 6px;
-    padding: 6px 10px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    z-index: 101;
-  }
-  #toggleConverter:hover {
-    background-color: #5b6ba1;
-  }
-
-  #converterPanel input {
-    width: 100%;
-    margin-top: 5px;
-    padding: 4px;
-    font-family: inherit;
-    background: #1d1d2b;
-    border: 1px solid #555;
-    color: #9fffa0;
-    text-align: center;
-  }
-  #converterPanel .output {
-    margin-top: 8px;
-    background: #222238;
-    padding: 4px;
-    border-radius: 4px;
-    text-align: center;
-  }
-
-  #flagTable, #aluTable, #destTable, #jumpTable {
-    width: 100%;
-    margin-top: 6px;
-    font-size: 12px;
-  }
-  #flagTable th, #aluTable th, #destTable th, #jumpTable th {
-    background-color: #3b3b55;
-  }
-  h3 {
-    margin: 10px 0 5px;
-    color: #9ad8ff;
-  }
+#toggleConverter {
+  position: fixed;
+  top: 70px;
+  right: 0;
+  background-color: #444c68;
+  color: #fff;
+  border-radius: 6px 0 0 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  z-index: 101;
+}
+#toggleConverter:hover {
+  background-color: #5b6ba1;
+}
+#converterPanel input {
+  width: 100%;
+  margin-top: 5px;
+  padding: 4px;
+  font-family: inherit;
+  background: #1d1d2b;
+  border: 1px solid #555;
+  color: #9fffa0;
+  text-align: center;
+}
+#converterPanel .output {
+  margin-top: 8px;
+  background: #222238;
+  padding: 4px;
+  border-radius: 4px;
+  text-align: center;
+}
+#flagTable, #aluTable, #destTable, #jumpTable {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 12px;
+}
+#flagTable th, #aluTable th, #destTable th, #jumpTable th {
+  background-color: #3b3b55;
+}
+h3 {
+  margin: 10px 0 5px;
+  color: #9ad8ff;
+}
 </style>
 </head>
 <body>
@@ -207,7 +195,6 @@
   </div>
 </div>
 
-<!-- === Collapsible binary→hex converter panel === -->
 <div id="converterPanel">
   <h3>Bit Flags</h3>
   <table id="flagTable">
@@ -251,7 +238,20 @@
 
   <h3>Binary → Hex</h3>
   <input id="binaryInput" type="text" placeholder="Enter binary (e.g. 1010101010101010)">
-  <div class="output" id="hexOutput">Hex: 0x0</div>
+  <div class="output" id="hexOutput">Hex: 0x0</div><br />
+  <h2>Controls</h2>
+  <label for="clockSpeed">Clock Speed:</label>
+  <select id="clockSpeed">
+    <option value="1">Slow (1 fps)</option>
+    <option value="10">Fast (10 fps)</option>
+    <option value="0">Computer speed</option>
+  </select>
+  <button id="startClock">▶ Start</button>
+  <button id="stopClock">⏹ Stop</button>
+  <br><br>
+  <button id="importROM">📂 Import ROM</button>
+  <input type="file" id="romFileInput" accept=".txt" style="display:none">
+  <button id="exportROM">💾 Export ROM</button>
 </div>
 
 <div id="toggleConverter">◀ Tools</div>
@@ -262,87 +262,17 @@ function extractBits(number, position, length) {
   return (number >>> position) & ((1 << length) - 1);
 }
 
-class Counter {
-  constructor() { this.register = new Int16Array(1); }
-  update(st, X) { this.register[0] = st ? X : this.register[0] + 1; }
-  f_reg() { return this.register[0]; }
-}
+class Counter { constructor() { this.register = new Int16Array(1); } update(st, X) { this.register[0] = st ? X : this.register[0] + 1; } f_reg() { return this.register[0]; } }
+class CM { constructor() { this.memory = new Int16Array(65536); this.registers = new Int16Array(2); } update(regs, X) { if (extractBits(regs, 2, 1)) this.memory[this.registers[0]] = X; if (extractBits(regs, 0, 1)) this.registers[0] = X; if (extractBits(regs, 1, 1)) this.registers[1] = X; } f_regs() { return new Int16Array([ this.registers[0], this.registers[1], this.memory[this.registers[0]] ]); } }
+class ROM { constructor() { this.memory = new Int16Array(256); } s_mem(ad, X) { this.memory[ad] = X; } f_reg(ad) { return this.memory[ad]; } }
 
-class CM {
-  constructor() {
-    this.memory = new Int16Array(65536);
-    this.registers = new Int16Array(2);
-  }
-  update(regs, X) {
-    if (extractBits(regs, 2, 1)) this.memory[this.registers[0]] = X;
-    if (extractBits(regs, 0, 1)) this.registers[0] = X;
-    if (extractBits(regs, 1, 1)) this.registers[1] = X;
-  }
-  f_regs() {
-    return new Int16Array([
-      this.registers[0],
-      this.registers[1],
-      this.memory[this.registers[0]]
-    ]);
-  }
-}
-
-class ROM {
-  constructor() { this.memory = new Int16Array(256); }
-  s_mem(ad, X) { this.memory[ad] = X; }
-  f_reg(ad) { return this.memory[ad]; }
-}
-
-function LU(op, X, Y) {
-  return [X & Y, X | Y, X ^ Y, ~X][op];
-}
-
-function AU(op, X, Y) {
-  if (op == 0) return X + Y;
-  if (op == 1) return ~(~X + Y);
-  if (op == 2) return X + 1;
-  if (op == 3) return X - 1;
-}
-
-function ALU(u, op, zx, sw, X, Y) {
-  let nx = sw ? Y : X;
-  let ny = sw ? X : Y;
-  if (zx) nx = 0;
-  return u ? AU(op, nx, ny) : LU(op, nx, ny);
-}
-
-function COND(lt, eq, gt, X) {
-  return ((lt & (X < 0)) | (eq & (X == 0)) | (gt & (X > 0)));
-}
-
-function ALU_I(I, A, D, AR) {
-  const useAreg = extractBits(I, 12, 1);
-  const out = ALU(
-    extractBits(I, 10, 1),
-    extractBits(I, 8, 2),
-    extractBits(I, 7, 1),
-    extractBits(I, 6, 1),
-    D,
-    useAreg ? AR : A
-  );
-  return new Int16Array([
-    out,
-    extractBits(I, 3, 3),
-    COND(extractBits(I, 2, 1), extractBits(I, 1, 1), extractBits(I, 0, 1), out)
-  ]);
-}
-
-function CPU(I, A, D, AR) {
-  if (extractBits(I, 15, 1)) return ALU_I(I, A, D, AR);
-  return [I, 0x1, 0];
-}
-
-function COMPUTER(cm, rom, pc) {
-  const G = cm.f_regs();
-  const R = CPU(rom.f_reg(pc.f_reg()), G[0], G[1], G[2]);
-  cm.update(R[1], R[0]);
-  pc.update(R[2], G[0]);
-}
+function LU(op, X, Y) { return [X & Y, X | Y, X ^ Y, ~X][op]; }
+function AU(op, X, Y) { if (op == 0) return X + Y; if (op == 1) return ~(~X + Y); if (op == 2) return X + 1; if (op == 3) return X - 1; }
+function ALU(u, op, zx, sw, X, Y) { let nx = sw ? Y : X; let ny = sw ? X : Y; if (zx) nx = 0; return u ? AU(op, nx, ny) : LU(op, nx, ny); }
+function COND(lt, eq, gt, X) { return ((lt & (X < 0)) | (eq & (X == 0)) | (gt & (X > 0))); }
+function ALU_I(I, A, D, AR) { const useAreg = extractBits(I, 12, 1); const out = ALU(extractBits(I, 10, 1), extractBits(I, 8, 2), extractBits(I, 7, 1), extractBits(I, 6, 1), D, useAreg ? AR : A); return new Int16Array([ out, extractBits(I, 3, 3), COND(extractBits(I, 2, 1), extractBits(I, 1, 1), extractBits(I, 0, 1), out) ]); }
+function CPU(I, A, D, AR) { if (extractBits(I, 15, 1)) return ALU_I(I, A, D, AR); return [I, 0x1, 0]; }
+function COMPUTER(cm, rom, pc) { const G = cm.f_regs(); const R = CPU(rom.f_reg(pc.f_reg()), G[0], G[1], G[2]); cm.update(R[1], R[0]); pc.update(R[2], G[0]); }
 
 // === UI ===
 const rom = new ROM();
@@ -365,13 +295,9 @@ function renderROM() {
   romTable.innerHTML = "";
   const start = currentPage * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-
   for (let i = start; i < end; i++) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i}</td>
-      <td><input class="rom-input" data-addr="${i}" value="${rom.memory[i].toString(16)}" /></td>
-    `;
+    tr.innerHTML = `<td>${i}</td><td><input class="rom-input" data-addr="${i}" value="${rom.memory[i].toString(16)}" /></td>`;
     romTable.appendChild(tr);
   }
 }
@@ -398,23 +324,72 @@ function refreshUI() {
 
   [...romTable.children].forEach(tr => tr.classList.remove("active"));
   const relIndex = pc.f_reg() - currentPage * PAGE_SIZE;
-  if (relIndex >= 0 && relIndex < PAGE_SIZE) {
-    romTable.children[relIndex].classList.add("active");
-  }
+  if (relIndex >= 0 && relIndex < PAGE_SIZE) romTable.children[relIndex].classList.add("active");
 
   renderDisplay();
 }
+
+// === Clock ===
+let clockHandle = null;
+let isRunning = false;
+
+function startClock() {
+  const speed = parseInt(document.getElementById("clockSpeed").value);
+  stopClock();
+  isRunning = true;
+  if (speed === 0) {
+    function run() {
+      if (!isRunning) return;
+      COMPUTER(cm, rom, pc);
+      refreshUI();
+      clockHandle = requestAnimationFrame(run);
+    }
+    run();
+  } else {
+    clockHandle = setInterval(() => {
+      COMPUTER(cm, rom, pc);
+      refreshUI();
+    }, 1000 / speed);
+  }
+}
+
+function stopClock() {
+  isRunning = false;
+  if (clockHandle !== null) {
+    if (typeof clockHandle === "number") clearInterval(clockHandle);
+    else cancelAnimationFrame(clockHandle);
+    clockHandle = null;
+  }
+}
+
+document.getElementById("startClock").addEventListener("click", startClock);
+document.getElementById("stopClock").addEventListener("click", stopClock);
+
+// === ROM Import / Export ===
+document.getElementById("importROM").addEventListener("click", () => document.getElementById("romFileInput").click());
+document.getElementById("romFileInput").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    const lines = evt.target.result.split(/\r?\n/);
+    lines.forEach((line, i) => { const val = parseInt(line.trim(), 16); if (!isNaN(val)) rom.s_mem(i, val); });
+    renderROM(); refreshUI();
+  };
+  reader.readAsText(file);
+});
+document.getElementById("exportROM").addEventListener("click", () => {
+  let text = ""; for (let i = 0; i < rom.memory.length; i++) text += rom.memory[i].toString(16).padStart(4, "0") + "\n";
+  const blob = new Blob([text], { type: "text/plain" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rom.txt"; a.click();
+});
 
 // === Binary → Hex converter logic ===
 document.getElementById("binaryInput").addEventListener("input", e => {
   const val = e.target.value.trim();
   const output = document.getElementById("hexOutput");
-  if (/^[01]+$/.test(val)) {
-    const hex = parseInt(val, 2).toString(16).toUpperCase();
-    output.textContent = `Hex: 0x${hex}`;
-  } else {
-    output.textContent = "Hex: Invalid input";
-  }
+  if (/^[01]+$/.test(val)) output.textContent = `Hex: 0x${parseInt(val,2).toString(16).toUpperCase()}`;
+  else output.textContent = "Hex: Invalid input";
 });
 
 // Collapsible toggle
@@ -422,46 +397,25 @@ const toggle = document.getElementById("toggleConverter");
 const panel = document.getElementById("converterPanel");
 toggle.addEventListener("click", () => {
   const open = panel.classList.toggle("open");
-  toggle.textContent = open ? "Tools ▶" : "◀ Tools";
+  toggle.textContent = open ? "▶ Tools" : "◀ Tools";
 });
+
+// ROM navigation
+document.getElementById("prevPage").addEventListener("click", () => { if (currentPage>0) currentPage--; renderROM(); });
+document.getElementById("nextPage").addEventListener("click", () => { currentPage++; renderROM(); });
+
+document.getElementById("next").addEventListener("click", () => { COMPUTER(cm, rom, pc); refreshUI(); });
+document.getElementById("reset").addEventListener("click", () => { cm.registers[0]=cm.registers[1]=cm.memory[cm.registers[0]]=0; pc.register[0]=0; refreshUI(); });
 
 romTable.addEventListener("input", e => {
-  if (e.target.classList.contains("rom-input")) {
-    const addr = parseInt(e.target.dataset.addr);
-    const val = parseInt(e.target.value, 16);
-    rom.s_mem(addr, val || 0);
-  }
-});
-
-document.getElementById("next").addEventListener("click", () => {
-  COMPUTER(cm, rom, pc);
-  refreshUI();
-});
-
-document.getElementById("reset").addEventListener("click", () => {
-  pc.register[0] = 0;
-  cm.registers[0] = 0;
-  cm.registers[1] = 0;
-  refreshUI();
-});
-
-document.getElementById("nextPage").addEventListener("click", () => {
-  if ((currentPage + 1) * PAGE_SIZE < rom.memory.length) {
-    currentPage++;
-    renderROM();
-    refreshUI();
-  }
-});
-document.getElementById("prevPage").addEventListener("click", () => {
-  if (currentPage > 0) {
-    currentPage--;
-    renderROM();
-    refreshUI();
-  }
+  const addr = parseInt(e.target.dataset.addr);
+  const val = parseInt(e.target.value,16);
+  if (!isNaN(addr) && !isNaN(val)) rom.s_mem(addr, val);
 });
 
 renderROM();
 refreshUI();
 </script>
+
 </body>
 </html>
