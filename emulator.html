@@ -24,6 +24,11 @@
     flex: 1;
     position: relative;
   }
+  .rom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -51,39 +56,96 @@
     background-color: #444c68;
     border: none;
     color: white;
-    padding: 6px 10px;
-    margin-right: 5px;
+    padding: 8px 14px;
+    margin-right: 10px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
   }
   button:hover {
     background-color: #5b6ba1;
   }
-  /* Pager buttons */
-  .pager {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-  }
 
-  /* Right-side vertical split */
-  .right-panel {
+  /* Right side split layout */
+  .right-box {
     display: flex;
     flex-direction: column;
     gap: 15px;
   }
   .subpanel {
-    background-color: #35354a;
+    background-color: #33334a;
     padding: 10px;
     border-radius: 6px;
   }
-
   canvas {
     background-color: #111;
     border: 1px solid #555;
     display: block;
-    margin: 10px auto;
+    margin-top: 10px;
+  }
+
+  /* === Collapsible Converter Panel === */
+  #converterPanel {
+    position: fixed;
+    top: 60px;
+    right: -260px;
+    width: 260px;
+    background-color: #2f2f46;
+    border-radius: 8px 0 0 8px;
+    padding: 10px;
+    font-size: 13px;
+    transition: right 0.3s ease-in-out;
+    box-shadow: -2px 0 6px rgba(0,0,0,0.4);
+    z-index: 100;
+  }
+  #converterPanel.open {
+    right: 0;
+  }
+
+  #toggleConverter {
+    position: fixed;
+    top: 70px;
+    right: 0;
+    background-color: #444c68;
+    color: #fff;
+    border-radius: 6px 0 0 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    z-index: 101;
+  }
+  #toggleConverter:hover {
+    background-color: #5b6ba1;
+  }
+
+  #converterPanel input {
+    width: 100%;
+    margin-top: 5px;
+    padding: 4px;
+    font-family: inherit;
+    background: #1d1d2b;
+    border: 1px solid #555;
+    color: #9fffa0;
+    text-align: center;
+  }
+  #converterPanel .output {
+    margin-top: 8px;
+    background: #222238;
+    padding: 4px;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  #flagTable, #aluTable, #destTable, #jumpTable {
+    width: 100%;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  #flagTable th, #aluTable th, #destTable th, #jumpTable th {
+    background-color: #3b3b55;
+  }
+  h3 {
+    margin: 10px 0 5px;
+    color: #9ad8ff;
   }
 </style>
 </head>
@@ -93,11 +155,12 @@
 
 <div class="container">
   <div class="panel">
-    <h2>ROM (Program Memory)</h2>
-    <div class="pager">
-      <button id="prevPage">◀</button>
-      <span id="pageIndicator">Page 0</span>
-      <button id="nextPage">▶</button>
+    <div class="rom-header">
+      <h2>ROM (Program Memory)</h2>
+      <div>
+        <button id="prevPage">◀ Page</button>
+        <button id="nextPage">Page ▶</button>
+      </div>
     </div>
     <table id="romTable">
       <thead>
@@ -107,7 +170,7 @@
     </table>
   </div>
 
-  <div class="panel right-panel">
+  <div class="panel right-box">
     <div class="subpanel">
       <h2>CPU State</h2>
       <p><b>Register A:</b> <span id="regA">0</span></p>
@@ -121,14 +184,60 @@
 
     <div class="subpanel">
       <h2>Digital Peripherals</h2>
-      <canvas id="display" width="64" height="64"></canvas>
-      <div style="text-align:center;">
-        <button id="btn1">Button 1</button>
-        <button id="btn2">Button 2</button>
-      </div>
+      <canvas id="display" width="128" height="128"></canvas>
+      <div id="inputArea"></div>
     </div>
   </div>
 </div>
+
+<!-- === Collapsible binary→hex converter panel === -->
+<div id="converterPanel">
+  <h3>Bit Flags</h3>
+  <table id="flagTable">
+    <tr><th>Bit</th><th>Meaning</th></tr>
+    <tr><td>15</td><td>Instruction Type (1 = C, 0 = A)</td></tr>
+    <tr><td>12</td><td>Use A register</td></tr>
+    <tr><td>10–11</td><td>ALU Operation</td></tr>
+    <tr><td>7</td><td>Zero X input</td></tr>
+    <tr><td>6</td><td>Swap X/Y inputs</td></tr>
+    <tr><td>3–5</td><td>Destination bits</td></tr>
+    <tr><td>0–2</td><td>Jump condition bits</td></tr>
+  </table>
+
+  <h3>ALU Operations</h3>
+  <table id="aluTable">
+    <tr><th>op (bits 9–8)</th><th>Meaning</th></tr>
+    <tr><td>00</td><td>X + Y</td></tr>
+    <tr><td>01</td><td>~(~X + Y)</td></tr>
+    <tr><td>10</td><td>X + 1</td></tr>
+    <tr><td>11</td><td>X - 1</td></tr>
+  </table>
+
+  <h3>Destination Bits</h3>
+  <table id="destTable">
+    <tr><th>Bits</th><th>Destination</th></tr>
+    <tr><td>Bit 5</td><td>→ Memory[A]</td></tr>
+    <tr><td>Bit 4</td><td>→ D Register</td></tr>
+    <tr><td>Bit 3</td><td>→ A Register</td></tr>
+  </table>
+
+  <h3>Jump Conditions</h3>
+  <table id="jumpTable">
+    <tr><th>Bits (2–0)</th><th>Condition</th></tr>
+    <tr><td>001</td><td>JGT (out &gt; 0)</td></tr>
+    <tr><td>010</td><td>JEQ (out == 0)</td></tr>
+    <tr><td>100</td><td>JLT (out &lt; 0)</td></tr>
+    <tr><td>011</td><td>JGE</td></tr>
+    <tr><td>101</td><td>JNE</td></tr>
+    <tr><td>111</td><td>JMP (always)</td></tr>
+  </table>
+
+  <h3>Binary → Hex</h3>
+  <input id="binaryInput" type="text" placeholder="Enter binary (e.g. 1010101010101010)">
+  <div class="output" id="hexOutput">Hex: 0x0</div>
+</div>
+
+<div id="toggleConverter">◀ Tools</div>
 
 <script>
 // bit extraction helper
@@ -144,7 +253,7 @@ class Counter {
 
 class CM {
   constructor() {
-    this.memory = new Int16Array(256);
+    this.memory = new Int16Array(65536);
     this.registers = new Int16Array(2);
   }
   update(regs, X) {
@@ -208,20 +317,14 @@ function ALU_I(I, A, D, AR) {
 
 function CPU(I, A, D, AR) {
   if (extractBits(I, 15, 1)) return ALU_I(I, A, D, AR);
-  return [I, 0x64, 0];
+  return [I, 0x1, 0];
 }
 
 function COMPUTER(cm, rom, pc) {
   const G = cm.f_regs();
-  const instruction = rom.f_reg(pc.f_reg());
-  const R = CPU(instruction, G[0], G[1], G[2]);
+  const R = CPU(rom.f_reg(pc.f_reg()), G[0], G[1], G[2]);
   cm.update(R[1], R[0]);
   pc.update(R[2], G[0]);
-
-  // If bit 14 is set, update display pixel
-  if (extractBits(instruction, 14, 1)) {
-    drawPixel(G[0] % 8, G[1] % 8);
-  }
 }
 
 // === UI ===
@@ -235,13 +338,16 @@ const regDEl = document.getElementById("regD");
 const memAEl = document.getElementById("memA");
 const pcEl = document.getElementById("pc");
 
-let romPage = 0;
-const pageSize = 16;
+const display = document.getElementById("display");
+const ctx = display.getContext("2d");
+
+let currentPage = 0;
+const PAGE_SIZE = 16;
 
 function renderROM() {
   romTable.innerHTML = "";
-  const start = romPage * pageSize;
-  const end = start + pageSize;
+  const start = currentPage * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
 
   for (let i = start; i < end; i++) {
     const tr = document.createElement("tr");
@@ -251,8 +357,19 @@ function renderROM() {
     `;
     romTable.appendChild(tr);
   }
+}
 
-  document.getElementById("pageIndicator").textContent = `Page ${romPage}`;
+function renderDisplay() {
+  const imgData = ctx.createImageData(display.width, display.height);
+  for (let i = 0; i < display.width * display.height; i++) {
+    const pixelOn = cm.memory[16384 + i] & 1;
+    const idx = i * 4;
+    imgData.data[idx] = pixelOn ? 255 : 0;
+    imgData.data[idx + 1] = pixelOn ? 255 : 0;
+    imgData.data[idx + 2] = pixelOn ? 255 : 0;
+    imgData.data[idx + 3] = 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
 }
 
 function refreshUI() {
@@ -263,9 +380,33 @@ function refreshUI() {
   pcEl.textContent = pc.f_reg();
 
   [...romTable.children].forEach(tr => tr.classList.remove("active"));
-  const currentRow = romTable.children[pc.f_reg() % pageSize];
-  if (currentRow) currentRow.classList.add("active");
+  const relIndex = pc.f_reg() - currentPage * PAGE_SIZE;
+  if (relIndex >= 0 && relIndex < PAGE_SIZE) {
+    romTable.children[relIndex].classList.add("active");
+  }
+
+  renderDisplay();
 }
+
+// === Binary → Hex converter logic ===
+document.getElementById("binaryInput").addEventListener("input", e => {
+  const val = e.target.value.trim();
+  const output = document.getElementById("hexOutput");
+  if (/^[01]+$/.test(val)) {
+    const hex = parseInt(val, 2).toString(16).toUpperCase();
+    output.textContent = `Hex: 0x${hex}`;
+  } else {
+    output.textContent = "Hex: Invalid input";
+  }
+});
+
+// Collapsible toggle
+const toggle = document.getElementById("toggleConverter");
+const panel = document.getElementById("converterPanel");
+toggle.addEventListener("click", () => {
+  const open = panel.classList.toggle("open");
+  toggle.textContent = open ? "Tools ▶" : "◀ Tools";
+});
 
 romTable.addEventListener("input", e => {
   if (e.target.classList.contains("rom-input")) {
@@ -288,40 +429,22 @@ document.getElementById("reset").addEventListener("click", () => {
 });
 
 document.getElementById("nextPage").addEventListener("click", () => {
-  romPage = (romPage + 1) % (256 / pageSize);
-  renderROM();
-  refreshUI();
+  if ((currentPage + 1) * PAGE_SIZE < rom.memory.length) {
+    currentPage++;
+    renderROM();
+    refreshUI();
+  }
 });
-
 document.getElementById("prevPage").addEventListener("click", () => {
-  romPage = (romPage - 1 + (256 / pageSize)) % (256 / pageSize);
-  renderROM();
-  refreshUI();
-});
-
-// === Digital Peripherals ===
-const canvas = document.getElementById("display");
-const ctx = canvas.getContext("2d");
-ctx.fillStyle = "#000";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-function drawPixel(x, y) {
-  const size = 8;
-  ctx.fillStyle = "#73d7ff";
-  ctx.fillRect(x * size, y * size, size, size);
-}
-
-document.getElementById("btn1").addEventListener("click", () => {
-  alert("Peripheral Button 1 Pressed!");
-});
-
-document.getElementById("btn2").addEventListener("click", () => {
-  alert("Peripheral Button 2 Pressed!");
+  if (currentPage > 0) {
+    currentPage--;
+    renderROM();
+    refreshUI();
+  }
 });
 
 renderROM();
 refreshUI();
 </script>
-
 </body>
 </html>
