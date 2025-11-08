@@ -72,9 +72,9 @@ class CM {
     }
     
     genTable(length) {
-    	let table = [["RAM"],["A","B", "-"], [this.registers[0].toString(2), this.registers[1].toString(2), "-"], ["index", "value", "Assembler equivelent"]]
+    	let table = [["RAM"],["A","B", "-"], [this.registers[0].toString(2), this.registers[1].toString(2), "-"], ["index", "value", "-"]]
         for(let i = 0; i < length; i++) {
-        	table.push([i, this.memory[i].toString(2), "-  (idk bruh)"]);
+        	table.push([i, this.memory[i].toString(2), "-"]);
         }
         return table;
     }
@@ -105,6 +105,14 @@ class ROM {
 	constructor() {
     	this.memory = new Int16Array(256);
     }
+
+	genTable(length) {
+    	let table = [["RAM"], ["index", "value", "Assembler equivelent"]]
+        for(let i = 0; i < length; i++) {
+        	table.push([i, this.memory[i].toString(2), "-  (idk bruh)"]);
+        }
+        return table;
+    }
     
     s_mem(ad, X) {
     	this.memory[ad] = X;
@@ -133,6 +141,8 @@ function createTable(tableData) {
 
   table.appendChild(tableBody);
   document.body.appendChild(table);
+
+	return table;
 }
 
 
@@ -288,13 +298,13 @@ nums[0] = 1;
 nums[1] = 1;
 
 try {
-	createTable(new CM().genTable(10));
+	const combinedMem = new CM();
+	const programMem = new ROM();
+	createTable(programMem.genTable(10));
 } catch(e) {
 	document.getElementById("out").innerText = e;
 }
 </script>
-
-<button onclick="console.log('s');alert(JSON.stringify(console.memory))">alert consoe</button>
 
 </body>
 </html>
