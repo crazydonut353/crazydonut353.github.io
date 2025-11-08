@@ -107,9 +107,9 @@ class ROM {
     }
 
 	genTable(length) {
-    	let table = [["RAM"], ["index", "value", "Assembler equivelent"]]
+    	let table = [["ROM"], ["index", "value", "Assembler equivelent"]]
         for(let i = 0; i < length; i++) {
-        	table.push([i, this.memory[i].toString(2), "-  (idk bruh)"]);
+        	table.push([i, this.memory[i].toString(2), "-"]);
         }
         return table;
     }
