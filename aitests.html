@@ -60,7 +60,7 @@ class Network {
 	calculate(input) {
 		const layer0Out = this.layer0.calcOut(input);
 		const layer1Out = this.layer1.calcOut(layer0Out);
-		const out = this.out.calculateOut(layer1Out);
+		const out = this.out.calcOut(layer1Out);
 		return out;
 	}
 }
@@ -68,7 +68,7 @@ class Network {
 const threshold = 1.5;
 const network = new Network();
 
-document.getElementById("demo").innerHTML = network.calculate();  
+document.getElementById("demo").innerHTML = network.calculate([1,0,1]);  
 </script>
 
 </body>
