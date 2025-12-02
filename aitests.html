@@ -5,6 +5,7 @@
 
 <p>Will I go to the concert?</p>
 <div id="demo"></div>
+<canvas id="c"></canvas>
 
 <script>
 class Neuron {
@@ -53,22 +54,90 @@ class Layer {
 
 class Network {
 	constructor() {
-		this.layer0 = new Layer(4,3);
-		this.layer1 = new Layer(4,4);
-		this.out = new Layer(3,4);
+		this.layers = [
+        	new Layer(4,3),
+          	new Layer(4,4),
+            new Layer(3,4)
+        ]
 	}
 	calculate(input) {
-		const layer0Out = this.layer0.calcOut(input);
-		const layer1Out = this.layer1.calcOut(layer0Out);
-		const out = this.out.calcOut(layer1Out);
+		const layer0Out = this.layers[0].calcOut(input);
+		const layer1Out = this.layers[1].calcOut(layer0Out);
+		const out = this.layers[2].calcOut(layer1Out);
 		return out;
 	}
+    
 }
-	
+
+class NetworkVisualizer {
+	constructor(type, x, y) {
+    	this.type = type;
+        this.x = x;
+        this.y = y;
+    }
+    
+    render(canvas,ctx,network) {
+    	if(this.type == "n0"){
+        	for(let r = 0; r < 3; r++) {
+            	const sy = this.y - ((3*10*2)/2);
+            	ctx.beginPath();
+                ctx.arc(this.x, sy+(r*10*2), 5, 0, 2 * Math.PI);
+                ctx.fillStyle = "red";
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "blue";
+                ctx.stroke();
+            }
+            for(let l = 1; l < 4; l++) {
+            	const sy = this.y - ((network.layers[l-1].neurons.length*10*2)/2);
+                const sx = this.x+(l*10*2);
+                let spy = 0;
+                if(l == 1) {spy=this.y - ((3*10*2)/2)} else {spy = this.y - ((network.layers[l-2].neurons.length*10*2)/2)}
+                const spx = this.x+((l-1)*10*2);
+                
+            	for(let r = 0; r < network.layers[l-1].neurons.length; r++) {
+                    ctx.beginPath();
+                    ctx.arc(sx, sy+(r*10*2), 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = "red";
+                    ctx.fill();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = "blue";
+                    ctx.stroke();
+                    for(let i = 0; i < network.layers[l-1].neurons[r].weights.length; i++) {
+                    	const f = network.layers[l-1].neurons[r].weights[i]*255;
+                    	ctx.strokeStyle = "rgb("+f+","+f+","+f+")";
+                    	// Define a new path
+                        ctx.beginPath();
+
+                        // Set a start-point
+                        ctx.moveTo(sx, sy+(r*10*2));
+
+                        // Set an end-point
+                        ctx.lineTo(spx, spy+(i*10*2));
+
+                        // Stroke it (Do the Drawing)
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+    }
+}
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
 const threshold = 1.5;
 const network = new Network();
+const nvis = new NetworkVisualizer("n0", 100, 100);
 
-document.getElementById("demo").innerHTML = network.calculate([1,0,1]);  
+
+try {
+	nvis.render(canvas, ctx, network);
+} catch(e) {
+	alert(e);
+}
+document.getElementById("demo").innerHTML = network.calculate([1,0,1]); 
 </script>
 
 </body>
