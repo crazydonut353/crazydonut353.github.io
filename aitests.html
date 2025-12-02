@@ -51,19 +51,24 @@ class Layer {
     }
 }
 
-const threshold = 1.5;
-const network = {
-	input : [1,0,1],
-    layer0 : new Layer(4,3),
-    layer1 : new Layer(4,4),
-    out : new Neuron(Math.random()*4, 4)
+class Network {
+	constructor() {
+		this.layer0 = new Layer(4,3);
+		this.layer1 = new Layer(4,4);
+		this.out = new Layer(3,4);
+	}
+	calculate(input) {
+		const layer0Out = this.layer0.calcOut(input);
+		const layer1Out = this.layer1.calcOut(layer0Out);
+		const out = this.out.calculateOut(layer1Out);
+		return out;
+	}
 }
+	
+const threshold = 1.5;
+const network = new Network();
 
-const layer0Out = network.layer0.calcOut(network.input);
-const layer1Out = network.layer1.calcOut(layer0Out);
-const out = network.out.calculateOut(layer1Out);
-
-document.getElementById("demo").innerHTML = out;  
+document.getElementById("demo").innerHTML = network.calculate();  
 </script>
 
 </body>
